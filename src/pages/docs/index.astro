@@ -1,0 +1,174 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { sections } from '../../data/site';
+
+const all = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+const groups = sections.map((s) => ({ ...s, pages: all.filter((d) => d.data.section === s.id) }));
+const blurbs: Record<string, string> = {
+  start: 'Install tern, connect your accounts and find your way around.',
+  mail: 'Reading, triage, threads, search, writing and sending.',
+  calendar: 'The agenda, events and invitations, call links, contacts and reminders.',
+  reference: 'Every key, every setting, every file tern touches.',
+};
+---
+
+<Base title="Docs" description="Everything you need to set up and use tern: mail, calendar, contacts, keys and configuration." active="docs">
+  <section class="wrap intro">
+    <p class="mono kicker">docs</p>
+    <h1>Set it up once. Then just use it.</h1>
+    <p class="lede">
+      tern is meant to be learned in an afternoon. Start with the <a href="/docs/quick-start/">quick start</a>,
+      keep <a href="/docs/keys/">the keys</a> open in a tab, and run <code>tern doctor</code> when something
+      doesn't connect.
+    </p>
+    <div class="quick">
+      <a href="/docs/install/"><span class="mono">01</span> Install</a>
+      <a href="/docs/quick-start/"><span class="mono">02</span> Quick start</a>
+      <a href="/docs/accounts/"><span class="mono">03</span> Add accounts</a>
+      <a href="/docs/keys/"><span class="mono">04</span> Learn the keys</a>
+    </div>
+  </section>
+
+  <section class="wrap groups">
+    {
+      groups.map((g) => (
+        <div class="group">
+          <div class="gh">
+            <h2>{g.title}</h2>
+            <p>{blurbs[g.id]}</p>
+          </div>
+          <ul role="list">
+            {g.pages.map((p) => (
+              <li>
+                <a href={`/docs/${p.id}/`}>
+                  <b>{p.data.title}</b>
+                  <span>{p.data.description}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .intro {
+    padding-top: 64px;
+    max-width: 900px;
+    margin-left: max(0px, calc((100% - var(--wrap)) / 2));
+  }
+  .kicker {
+    margin: 0 0 12px;
+    color: var(--accent);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(34px, 5vw, 56px);
+    letter-spacing: -0.04em;
+  }
+  .lede {
+    margin: 20px 0 0;
+    color: var(--muted);
+    font-size: 18.5px;
+    max-width: 680px;
+  }
+  .lede code {
+    font-size: 0.88em;
+    color: var(--strong);
+  }
+  .quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 30px;
+  }
+  .quick a {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--strong);
+    text-decoration: none;
+    font-size: 14.5px;
+    background: var(--surface);
+  }
+  .quick a:hover {
+    border-color: var(--accent);
+  }
+  .quick span {
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .groups {
+    display: grid;
+    gap: 56px;
+    padding-top: 72px;
+  }
+  .group {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+  .gh h2 {
+    margin: 0 0 8px;
+    font-size: 21px;
+  }
+  .gh p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .group ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .group a {
+    display: block;
+    height: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  .group a:hover {
+    border-color: var(--accent-line);
+    background: var(--surface);
+  }
+  .group b {
+    display: block;
+    color: var(--strong);
+    font-family: var(--mono);
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .group span {
+    display: block;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  @media (max-width: 860px) {
+    .group {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .group ul {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,416 @@
+---
+import Base from './Base.astro';
+import { getCollection } from 'astro:content';
+import { sections } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  slug?: string;
+  headings?: { depth: number; slug: string; text: string }[];
+}
+const { title, description, slug, headings = [] } = Astro.props;
+
+const all = (await getCollection('docs')).sort(
+  (a, b) =>
+    sections.findIndex((s) => s.id === a.data.section) - sections.findIndex((s) => s.id === b.data.section) ||
+    a.data.order - b.data.order,
+);
+const groups = sections.map((s) => ({ ...s, pages: all.filter((d) => d.data.section === s.id) }));
+const i = all.findIndex((d) => d.id === slug);
+const prev = i > 0 ? all[i - 1] : null;
+const next = i >= 0 && i < all.length - 1 ? all[i + 1] : null;
+const section = slug ? sections.find((s) => s.id === all[i]?.data.section) : null;
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const index = JSON.stringify(all.map((d) => ({ s: d.id, t: d.data.title, d: d.data.description })));
+---
+
+<Base title={title} description={description} active="docs">
+  <div class="wrap docs">
+    <aside class="side" aria-label="Documentation">
+      <details class="side-toggle" open>
+        <summary class="mono">{section ? `${section.title} › ${title}` : 'Documentation'}</summary>
+        <div class="search">
+          <label class="sr-only" for="doc-search">Search the docs</label>
+          <input id="doc-search" type="search" placeholder="Search docs" autocomplete="off" spellcheck="false" />
+          <kbd aria-hidden="true">/</kbd>
+          <ul class="results" role="list" hidden></ul>
+        </div>
+        <nav>
+          {
+            groups.map((g) => (
+              <div class="group">
+                <h4>{g.title}</h4>
+                <ul role="list">
+                  {g.pages.map((p) => (
+                    <li>
+                      <a href={`/docs/${p.id}/`} aria-current={p.id === slug ? 'page' : undefined}>
+                        {p.data.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </nav>
+      </details>
+    </aside>
+
+    <article class="content">
+      {section && <p class="crumb mono">{section.title}</p>}
+      <h1>{title}</h1>
+      <p class="desc">{description}</p>
+      <div class="prose">
+        <slot />
+      </div>
+      {
+        (prev || next) && (
+          <nav class="pager" aria-label="Previous and next">
+            {prev ? (
+              <a href={`/docs/${prev.id}/`} class="prev">
+                <span>← Previous</span>
+                {prev.data.title}
+              </a>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <a href={`/docs/${next.id}/`} class="next">
+                <span>Next →</span>
+                {next.data.title}
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </article>
+
+    <aside class="toc" aria-label="On this page">
+      {
+        toc.length > 1 && (
+          <>
+            <h4>On this page</h4>
+            <ul role="list">
+              {toc.map((h) => (
+                <li class={`d${h.depth}`}>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+    </aside>
+  </div>
+</Base>
+
+<script is:inline define:vars={{ index }}>
+  (function () {
+    var pages = JSON.parse(index);
+    var input = document.getElementById('doc-search');
+    var list = document.querySelector('.search .results');
+    var side = document.querySelector('.side-toggle');
+    // Docs open with the sidebar folded on small screens.
+    if (window.matchMedia('(max-width: 960px)').matches) side.removeAttribute('open');
+    var sel = 0;
+    function render() {
+      var q = input.value.trim().toLowerCase();
+      if (!q) {
+        list.hidden = true;
+        list.innerHTML = '';
+        return;
+      }
+      var words = q.split(/\s+/);
+      var hits = pages
+        .map(function (p) {
+          var t = p.t.toLowerCase(), d = p.d.toLowerCase(), score = 0;
+          for (var i = 0; i < words.length; i++) {
+            if (t.indexOf(words[i]) >= 0) score += 3;
+            else if (d.indexOf(words[i]) >= 0 || p.s.indexOf(words[i]) >= 0) score += 1;
+            else return null;
+          }
+          return { p: p, score: score };
+        })
+        .filter(Boolean)
+        .sort(function (a, b) { return b.score - a.score; })
+        .slice(0, 8);
+      sel = Math.min(sel, Math.max(hits.length - 1, 0));
+      list.innerHTML = hits.length
+        ? hits
+            .map(function (h, i) {
+              return '<li><a href="/docs/' + h.p.s + '/"' + (i === sel ? ' class="sel"' : '') + '><b>' +
+                h.p.t.replace(/</g, '&lt;') + '</b><span>' + h.p.d.replace(/</g, '&lt;') + '</span></a></li>';
+            })
+            .join('')
+        : '<li class="none">Nothing matches.</li>';
+      list.hidden = false;
+    }
+    input.addEventListener('input', function () { sel = 0; render(); });
+    input.addEventListener('keydown', function (e) {
+      var n = list.querySelectorAll('a').length;
+      if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) { sel = Math.min(sel + 1, n - 1); render(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) { sel = Math.max(sel - 1, 0); render(); e.preventDefault(); }
+      else if (e.key === 'Enter') { var a = list.querySelector('a.sel'); if (a) location.href = a.href; }
+      else if (e.key === 'Escape') { input.value = ''; render(); input.blur(); }
+    });
+    // "/" searches, as it filters in tern.
+    document.addEventListener('keydown', function (e) {
+      var t = e.target;
+      if (e.key === '/' && !(t instanceof HTMLInputElement) && !(t instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        side.setAttribute('open', '');
+        input.focus();
+      }
+    });
+  })();
+</script>
+
+<style>
+  .docs {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 210px;
+    gap: 48px;
+    max-width: 1320px;
+    padding-top: 40px;
+  }
+  .side,
+  .toc {
+    position: sticky;
+    top: 84px;
+    align-self: start;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .side-toggle summary {
+    display: none;
+  }
+  .search {
+    position: relative;
+    margin-bottom: 22px;
+  }
+  .search input {
+    width: 100%;
+    padding: 9px 34px 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--fg);
+    font: 14px var(--sans);
+  }
+  .search input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .search > kbd {
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    font-size: 11px;
+    min-width: 0;
+  }
+  .results {
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: -120px;
+    top: calc(100% + 6px);
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.5);
+  }
+  .results :global(a) {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--fg);
+  }
+  .results :global(a.sel),
+  .results :global(a:hover) {
+    background: var(--accent-soft);
+  }
+  .results :global(b) {
+    display: block;
+    font-size: 14px;
+    color: var(--strong);
+  }
+  .results :global(span) {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .results :global(.none) {
+    padding: 8px 10px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .group {
+    margin-bottom: 22px;
+  }
+  .group h4,
+  .toc h4 {
+    margin: 0 0 8px;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--subtle);
+  }
+  .group ul,
+  .toc ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .group a {
+    display: block;
+    padding: 4px 10px;
+    margin-left: -10px;
+    border-left: 2px solid transparent;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14.5px;
+  }
+  .group a:hover {
+    color: var(--strong);
+  }
+  .group a[aria-current='page'] {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+  }
+
+  .content {
+    min-width: 0;
+    max-width: 760px;
+  }
+  .crumb {
+    margin: 0 0 10px;
+    font-size: 12.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .content h1 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 44px);
+    letter-spacing: -0.035em;
+  }
+  .desc {
+    margin: 14px 0 36px;
+    font-size: 18.5px;
+    color: var(--muted);
+  }
+
+  .toc a {
+    display: block;
+    padding: 3px 0;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    line-height: 1.4;
+  }
+  .toc a:hover,
+  .toc a.on {
+    color: var(--accent);
+  }
+  .toc .d3 a {
+    padding-left: 12px;
+    font-size: 12.5px;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+  .pager a {
+    display: block;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--strong);
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .pager a:hover {
+    border-color: var(--accent);
+  }
+  .pager span {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--subtle);
+    margin-bottom: 2px;
+  }
+  .pager .next {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  @media (max-width: 1200px) {
+    .docs {
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+    .toc {
+      display: none;
+    }
+  }
+  @media (max-width: 960px) {
+    .docs {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+      padding-top: 16px;
+    }
+    .side {
+      position: static;
+      max-height: none;
+      overflow: visible;
+    }
+    .side-toggle {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+    .side-toggle summary {
+      display: block;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .side-toggle[open] summary {
+      border-bottom: 1px solid var(--border);
+    }
+    .side-toggle .search,
+    .side-toggle nav {
+      padding: 0 16px;
+    }
+    .side-toggle .search {
+      padding-top: 14px;
+    }
+    .results {
+      right: 0;
+    }
+    .pager {
+      grid-template-columns: 1fr;
+    }
+    .pager .next {
+      grid-column: 1;
+    }
+  }
+</style>

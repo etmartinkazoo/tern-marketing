@@ -1,43 +1,50 @@
-# Astro Starter Kit: Minimal
+# tern-marketing
+
+The website and documentation for **tern**, a terminal client for mail, calendar and
+contacts: mutt's ideas rebuilt for 2026.
+
+Built with [Astro](https://astro.build). No UI framework and no CSS framework. One
+dependency.
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run dev        # http://localhost:4321
+npm run build      # static site in dist/
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Layout
 
-## 🚀 Project Structure
+| Path | What |
+|---|---|
+| `src/pages/index.astro` | the landing page |
+| `src/content/docs/*.md` | every docs page (frontmatter: `title`, `description`, `section`, `order`) |
+| `src/layouts/Docs.astro` | docs sidebar, search (`/`), table of contents, prev/next |
+| `src/data/themes.ts` | the Omarchy palettes the site can wear |
+| `src/captures/*.html` | real tern screens, generated, don't edit |
+| `src/styles/captures.css` | their colors per theme, generated |
+| `scripts/captures/` | how the captures are made |
 
-Inside of your Astro project, you'll see the following folders and files:
+## The screenshots are real
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+Every terminal on the landing page is `tern --demo`, captured from tmux in each of the
+seven themes. `build_caps.py` aligns the seven captures cell by cell and turns each
+distinct color into a CSS variable. So there's one HTML grid per screen, and the theme
+picker recolors it along with the rest of the page.
+
+To regenerate after tern's UI changes (needs `tmux` and a built `tern`):
+
+```sh
+cd scripts/captures
+TERN_BIN=/path/to/tern ./all.sh                 # → out/<theme>/<screen>.txt
+python3 build_caps.py out ../../src/captures ../../src/styles/captures.css
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Writing docs
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Docs are checked against tern's source. A key, default, path or behavior that isn't
+in the code doesn't go in the docs. Link between pages as `/docs/<slug>/`.
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Fonts
 
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+JetBrains Mono (OFL) and the Nerd Fonts symbols (MIT), each cut down to the glyphs
+the site uses. Licenses are in `public/fonts/`.

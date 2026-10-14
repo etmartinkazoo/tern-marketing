@@ -1,0 +1,45 @@
+---
+// A terminal window around a real tern capture (see src/captures/, generated from
+// `tern --demo` in every theme by build_caps.py).
+import mail from '../captures/mail.html?raw';
+import calendar from '../captures/calendar.html?raw';
+import quickadd from '../captures/quickadd.html?raw';
+import people from '../captures/people.html?raw';
+import compose from '../captures/compose.html?raw';
+import snooze from '../captures/snooze.html?raw';
+import keys from '../captures/keys.html?raw';
+
+const screens = { mail, calendar, quickadd, people, compose, snooze, keys };
+interface Props {
+  screen: keyof typeof screens;
+  title?: string;
+  alt: string;
+  class?: string;
+  /** Keep only the first `crop` rows (plus the status line) of a sparse screen. */
+  crop?: number;
+}
+const { screen, title = 'tern', alt, class: cls, crop } = Astro.props;
+let html = screens[screen];
+if (crop) {
+  const open = html.indexOf('>') + 1;
+  const close = html.lastIndexOf('</pre>');
+  const rows = html.slice(open, close).split('\n');
+  html = html.slice(0, open) + [...rows.slice(0, crop), rows[rows.length - 1]].join('\n') + html.slice(close);
+}
+// Nerd Font icons are drawn wider than a cell; pin each to exactly one column.
+html = html.replace(/([\uF000-\uF2FF])/g, '<i class="g">$1</i>');
+---
+
+<figure class:list={['term', cls]} role="img" aria-label={alt}>
+  <div class="term-bar" aria-hidden="true">
+    <span class="dots"><i></i><i></i><i></i></span>
+    <span class="title">{title}</span>
+  </div>
+  <Fragment set:html={html} />
+</figure>
+
+<style>
+  figure {
+    margin: 0;
+  }
+</style>

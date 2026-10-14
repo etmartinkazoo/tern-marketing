@@ -1,0 +1,219 @@
+---
+// Pick the Omarchy theme the whole page (screenshots included) wears. Any element with
+// [data-set-theme] elsewhere on the page switches it too.
+import { themes } from '../data/themes';
+const { variant = 'menu' } = Astro.props as { variant?: 'menu' | 'chips' };
+---
+
+{
+  variant === 'menu' ? (
+    <details class="picker">
+      <summary aria-label="Theme">
+        <span class="sw" aria-hidden="true">
+          <i style="background:var(--accent)" />
+          <i style="background:var(--green)" />
+          <i style="background:var(--magenta)" />
+        </span>
+        <span class="cur mono" data-theme-name>Theme</span>
+      </summary>
+      <ul role="list">
+        {themes.map((t) => (
+          <li>
+            <button type="button" data-set-theme={t.id}>
+              <span class="dot" style={`background:${t.bg};box-shadow:inset 0 0 0 3px ${t.bg},inset 0 0 0 9px ${t.accent}`} />
+              {t.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  ) : (
+    <div class="chips" role="radiogroup" aria-label="Theme">
+      {themes.map((t) => (
+        <button type="button" role="radio" data-set-theme={t.id} style={`--c-bg:${t.bg};--c-fg:${t.fg};--c-ac:${t.accent};--c-2:${t.green};--c-3:${t.magenta}`}>
+          <span class="chip-sw" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          {t.name}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+<script>
+  const names: Record<string, string> = {
+    'tokyo-night': 'Tokyo Night',
+    catppuccin: 'Catppuccin',
+    gruvbox: 'Gruvbox',
+    nord: 'Nord',
+    everforest: 'Everforest',
+    kanagawa: 'Kanagawa',
+    'rose-pine': 'Rosé Pine',
+  };
+  function sync() {
+    const cur = document.documentElement.getAttribute('data-theme') || 'tokyo-night';
+    document.querySelectorAll<HTMLElement>('[data-theme-name]').forEach((el) => (el.textContent = names[cur] || cur));
+    document.querySelectorAll<HTMLElement>('[data-set-theme]').forEach((b) => {
+      const on = b.dataset.setTheme === cur;
+      b.setAttribute(b.getAttribute('role') === 'radio' ? 'aria-checked' : 'aria-pressed', String(on));
+    });
+  }
+  function set(id: string) {
+    document.documentElement.setAttribute('data-theme', id);
+    try {
+      localStorage.setItem('tern-theme', id);
+    } catch {}
+    sync();
+  }
+  document.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-set-theme]');
+    if (b) {
+      set(b.dataset.setTheme!);
+      b.closest('details')?.removeAttribute('open');
+      return;
+    }
+    // Close the menu on an outside click.
+    document.querySelectorAll('details.picker[open]').forEach((d) => {
+      if (!d.contains(e.target as Node)) d.removeAttribute('open');
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.querySelectorAll('details.picker[open]').forEach((d) => d.removeAttribute('open'));
+  });
+  sync();
+</script>
+
+<style>
+  .picker {
+    position: relative;
+  }
+  .picker summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    user-select: none;
+  }
+  .picker summary::-webkit-details-marker {
+    display: none;
+  }
+  .picker summary:hover,
+  .picker[open] summary {
+    border-color: var(--border-strong);
+    color: var(--strong);
+  }
+  .sw {
+    display: flex;
+  }
+  .sw i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-left: -3px;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .sw i:first-child {
+    margin-left: 0;
+  }
+  .picker ul {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    margin: 0;
+    padding: 6px;
+    min-width: 200px;
+    list-style: none;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.5);
+  }
+  .picker button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--fg);
+    font: 13px var(--mono);
+    text-align: left;
+    cursor: pointer;
+  }
+  .picker button:hover {
+    background: var(--surface-2);
+  }
+  .picker button[aria-pressed='true'] {
+    color: var(--accent);
+  }
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+  }
+  @media (max-width: 520px) {
+    .cur {
+      display: none;
+    }
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chips button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font: 12.5px var(--mono);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+  }
+  .chips button:hover {
+    border-color: var(--border-strong);
+    color: var(--strong);
+  }
+  .chips button[aria-checked='true'] {
+    border-color: var(--accent);
+    color: var(--strong);
+    background: var(--accent-soft);
+  }
+  .chip-sw {
+    display: flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 999px;
+    background: var(--c-bg);
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  .chip-sw i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-ac);
+  }
+  .chip-sw i:nth-child(2) {
+    background: var(--c-2);
+  }
+  .chip-sw i:nth-child(3) {
+    background: var(--c-3);
+  }
+</style>

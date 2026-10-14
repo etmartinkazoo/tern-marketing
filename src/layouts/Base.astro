@@ -1,0 +1,251 @@
+---
+import '../styles/global.css';
+import '../styles/captures.css';
+import { themes, themeCss } from '../data/themes';
+import { site } from '../data/site';
+import ThemePicker from '../components/ThemePicker.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  active?: 'home' | 'docs';
+}
+const { title, description = site.description, active } = Astro.props;
+const fullTitle = title ? `${title} · tern` : `tern — ${site.tagline}`;
+const ids = JSON.stringify(themes.map((t) => t.id));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#1a1b26" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fonts/jbm-regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/jbm-bold.woff2" as="font" type="font/woff2" crossorigin />
+    <style is:inline set:html={themeCss()}></style>
+    <script is:inline define:vars={{ ids }}>
+      // Wear the saved theme before first paint; a light system gets the light theme.
+      (function () {
+        var list = JSON.parse(ids);
+        var t = null;
+        try { t = localStorage.getItem('tern-theme'); } catch (e) {}
+        if (list.indexOf(t) < 0) {
+          t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'rose-pine' : 'tokyo-night';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip sr-only" href="#main">Skip to content</a>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="brand" href="/" aria-label="tern home">
+          <span class="bar" aria-hidden="true"></span><span class="word">tern</span>
+        </a>
+        <nav class="links" aria-label="Main">
+          <a href="/docs/" aria-current={active === 'docs' ? 'page' : undefined}>Docs</a>
+          <a href="/docs/keys/">Keys</a>
+          <a href="/#compare" class="hide-sm">vs neomutt</a>
+          <a href="/docs/install/" class="hide-sm">Install</a>
+        </nav>
+        <div class="right">
+          <ThemePicker />
+          <a class="btn primary get" href="/docs/install/">Get tern</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="foot">
+      <div class="wrap foot-inner">
+        <div class="foot-brand">
+          <a class="brand" href="/" aria-label="tern home"><span class="bar" aria-hidden="true"></span><span class="word">tern</span></a>
+          <p>Mail, calendar and contacts for people who live in the terminal.</p>
+        </div>
+        <div class="foot-cols">
+          <div>
+            <h4>Start</h4>
+            <a href="/docs/introduction/">Introduction</a>
+            <a href="/docs/install/">Install</a>
+            <a href="/docs/quick-start/">Quick start</a>
+            <a href="/docs/accounts/">Accounts</a>
+          </div>
+          <div>
+            <h4>Use</h4>
+            <a href="/docs/triage/">Triage</a>
+            <a href="/docs/composing/">Composing</a>
+            <a href="/docs/calendar/">Calendar</a>
+            <a href="/docs/people/">People</a>
+          </div>
+          <div>
+            <h4>Reference</h4>
+            <a href="/docs/keys/">Keys</a>
+            <a href="/docs/configuration/">Configuration</a>
+            <a href="/docs/themes/">Themes</a>
+            <a href="/docs/doctor/">tern doctor</a>
+          </div>
+        </div>
+      </div>
+      <div class="wrap foot-meta">
+        <span>tern {site.version} · {site.license} licensed · protocols by <a href="https://github.com/pimalaya">Pimalaya</a></span>
+        <span class="mono">:wq</span>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .skip:focus {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    width: auto;
+    height: auto;
+    clip: auto;
+    z-index: 100;
+    padding: 8px 12px;
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in oklab, var(--bg) 94%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    height: 60px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    color: var(--strong);
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.03em;
+  }
+  .brand .bar {
+    width: 4px;
+    height: 20px;
+    border-radius: 1px;
+    background: var(--accent);
+    transition: background-color 0.25s ease;
+  }
+  .links {
+    display: flex;
+    gap: 22px;
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+  .links a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .links a:hover,
+  .links a[aria-current='page'] {
+    color: var(--strong);
+  }
+  .right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .get {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  @media (max-width: 720px) {
+    .hide-sm {
+      display: none;
+    }
+    .nav-inner {
+      gap: 16px;
+    }
+    .links {
+      gap: 14px;
+    }
+    .get {
+      display: none;
+    }
+  }
+
+  .foot {
+    margin-top: 120px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px;
+  }
+  .foot-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: space-between;
+    padding-top: 48px;
+    padding-bottom: 32px;
+  }
+  .foot-brand p {
+    color: var(--muted);
+    max-width: 30ch;
+    margin: 12px 0 0;
+  }
+  .foot-cols {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 56px;
+  }
+  .foot-cols div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .foot-cols h4 {
+    margin: 0 0 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--subtle);
+  }
+  .foot-cols a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .foot-cols a:hover {
+    color: var(--strong);
+  }
+  .foot-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-top: 18px;
+    padding-bottom: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--subtle);
+    font-size: 13px;
+  }
+  .foot-meta a {
+    color: var(--muted);
+  }
+</style>

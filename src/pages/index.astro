@@ -1,16 +1,812 @@
 ---
+import Base from '../layouts/Base.astro';
+import Term from '../components/Term.astro';
+import ThemePicker from '../components/ThemePicker.astro';
+import { site } from '../data/site';
+
+const strokes = [
+  ['e', 'archive'],
+  ['d', 'trash'],
+  ['b', 'snooze'],
+  ['s', 'flag'],
+  ['x', 'mark'],
+  ['r', 'reply'],
+  ['gu', 'all inboxes'],
+  ['^z', 'undo send'],
+  ['C', 'calendar'],
+  ['P', 'people'],
+];
+
+const grid = [
+  { k: 'gu', t: 'One inbox for every account', d: 'Work and personal in one list, newest first. Archive and replies still go to the right account.' },
+  { k: 'IDLE', t: 'Push, not polling', d: 'A second connection waits in IMAP IDLE, so mail shows up the moment it lands.' },
+  { k: 'za', t: 'Real conversations', d: 'Threads from Message-ID and References, folded to one row, read top to bottom with quotes hidden.' },
+  { k: '/', t: 'Filter, then search', d: 'Filter the list as you type. Press ⏎ and the server searches the whole folder.' },
+  { k: 'H', t: 'HTML, tamed', d: 'Newsletters laid out as clean text: headings, lists, links and tables keep their shape. No remote images load.' },
+  { k: '^f', t: 'Send as anyone you are', d: 'Cycle the From address through your accounts; the signature follows.' },
+  { k: 'ge', t: 'Email → event', d: 'Turns a message into an event, with the date, time and call link it mentions already filled in.' },
+  { k: 'a', t: 'Answer invitations', d: 'Invites show as a card with what they overlap. a / t / n replies to the organizer and files the event.' },
+  { k: 'gm', t: 'Meet and Zoom links', d: 'gm creates a Google Meet link on an event; gz adds your personal Zoom room.' },
+  { k: 'today', t: 'Today, under your folders', d: 'The rest of today’s meetings sit in the mail sidebar, so you never switch screens to check.' },
+  { k: 'notify', t: 'Notifications that matter', d: 'New mail in your inboxes and meetings about to start, through notify-send and mako.' },
+  { k: 'U', t: 'One-key unsubscribe', d: 'Follows List-Unsubscribe, so the newsletter you never read stops coming.' },
+  { k: ',', t: 'Settings without a manual', d: 'Accounts, calendars, keys and theme, edited in the app. Your config.toml comments survive.' },
+  { k: 'auth', t: 'OAuth built in', d: 'tern auth signs Gmail and Microsoft 365 in through the browser. No helper scripts.' },
+  { k: 'click', t: 'Mouse when you want it', d: 'Click, double-click and scroll every pane. Turn it off for the terminal’s own selection.' },
+  { k: 'offline', t: 'Works offline', d: 'Calendars and contacts are cached; mail sent offline waits in the outbox and goes when you’re back.' },
+];
+
+const compare = [
+  ['Mail over IMAP and SMTP', 'yes', 'yes'],
+  ['Push with IMAP IDLE', 'yes', 'yes'],
+  ['Calendar (CalDAV)', 'no', 'yes — agenda, edit, invitations'],
+  ['Contacts (CardDAV)', 'via abook / khard', 'yes — read and write'],
+  ['Gmail & Microsoft 365 sign-in', 'via an OAuth script', 'built in: tern auth'],
+  ['Undo send, retrying outbox', 'no', 'yes'],
+  ['Snooze', 'no', 'yes'],
+  ['Unified inbox', 'with notmuch', 'yes'],
+  ['Writing', '$EDITOR', 'built-in vim-style pane, or $EDITOR'],
+  ['Configuration', 'muttrc', 'TOML plus an in-app settings screen'],
+  ['Colors', 'hand-written color lines', 'follows your Omarchy theme, live'],
+  ['Local maildir, mbox, notmuch', 'yes', 'no — IMAP only'],
+  ['PGP and S/MIME', 'yes', 'not yet'],
+];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <p class="eyebrow mono"><span class="prompt">$</span> tern <span class="dim">--demo</span></p>
+        <h1>Mail at the speed of <span class="accent">vim</span><span class="cursor" aria-hidden="true"></span></h1>
+        <p class="lede">
+          tern is mutt for 2026. Mail, calendar and contacts in one dense, keyboard-driven terminal app, with
+          nothing else on screen. It pushes new mail, never loses a message, and wears your Omarchy theme.
+        </p>
+        <div class="ctas">
+          <a class="btn primary" href="/docs/install/">Install tern</a>
+          <a class="btn" href="/docs/quick-start/">Read the quick start <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+
+      <div class="hero-shot">
+        <Term
+          screen="mail"
+          title="tern — Inbox"
+          alt="tern's mail view: a sidebar of folders with today's meetings below, a list of threaded conversations, and the selected thread on the right."
+        />
+        <div class="shot-foot">
+          <span class="mono label">This is tern, not a mockup. Pick a theme:</span>
+          <ThemePicker variant="chips" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEYSTROKES -->
+  <section class="strokes" aria-label="Single-key actions">
+    <div class="wrap">
+      <ul role="list">
+        {
+          strokes.map(([k, d]) => (
+            <li>
+              <kbd>{k}</kbd>
+              <span>{d}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- MANIFESTO -->
+  <section class="manifesto">
+    <div class="wrap narrow">
+      <p>
+        Your mail client shouldn't compete for your attention. tern has <em>no</em> badges, no feed, no promotions
+        tab, and no AI summarizing the person who wrote to you. It's three panes of text, a key for everything,
+        and a status line that tells you what just happened.
+      </p>
+    </div>
+  </section>
+
+  <!-- TRIAGE -->
+  <section class="feature">
+    <div class="wrap split">
+      <div class="copy">
+        <div class="ttl"><span class="pill">Mail</span>
+        <h2>Triage in keystrokes, not clicks.</h2></div>
+        <div class="txt">
+        <p>
+          Every action is one key, and the list moves before the server answers. Archive with <kbd>e</kbd>, trash
+          with <kbd>d</kbd>, move with <kbd>M</kbd>. Mark a run with <kbd>x</kbd> and act on all of it, or use
+          counts: <kbd>5j</kbd>.
+        </p>
+        <p>
+          Not today? <kbd>b</kbd> snoozes it to <em>tomorrow morning</em>, <em>Monday</em> or <em>3h</em> from now.
+          It moves to a Snoozed folder on the server, so it's gone from your phone too, then comes back unread.
+        </p>
+        <a class="more" href="/docs/triage/">How triage works →</a>
+        </div>
+      </div>
+      <Term screen="snooze" title="tern — snooze" alt="The snooze prompt in tern offering later today, tomorrow morning, this weekend and next week." />
+    </div>
+  </section>
+
+  <!-- COMPOSE -->
+  <section class="feature">
+    <div class="wrap split">
+      <div class="copy">
+        <div class="ttl"><span class="pill" style="--pill:var(--green)">Insert</span>
+        <h2>Reply without losing your place.</h2></div>
+        <div class="txt">
+        <p>
+          The reply opens in the right-hand pane with the list still in view. The editor is modal like vim:
+          <kbd>esc</kbd>, <kbd>dd</kbd>, <kbd>cw</kbd>, <kbd>u</kbd> and <kbd>ZZ</kbd> to send. Addresses complete
+          from your contacts.
+        </p>
+        <p>
+          <kbd>^f</kbd> switches which account it's sent from and swaps the signature. Prefer your own setup?
+          <kbd>:e</kbd> opens <code>$EDITOR</code> and brings you back.
+        </p>
+        <a class="more" href="/docs/composing/">Composing →</a>
+        </div>
+      </div>
+      <Term screen="compose" crop={24} title="tern — Reply" alt="A reply being written in tern's right pane, with the quoted thread below and the message list still visible." />
+    </div>
+  </section>
+
+  <!-- SAFETY -->
+  <section class="safety">
+    <div class="wrap">
+      <div class="head">
+        <span class="pill" style="--pill:var(--yellow)">Outbox</span>
+        <h2>Nothing you write gets lost.</h2>
+        <p class="sub">The terminal is a fragile place for a half-written email. tern is built so it never matters.</p>
+      </div>
+      <div class="cards">
+        <article>
+          <kbd>^z</kbd>
+          <h3>Undo send</h3>
+          <p>
+            Sent mail waits ten seconds in the outbox. <kbd>^z</kbd> brings it back into the composer, exactly as
+            you left it.
+          </p>
+        </article>
+        <article>
+          <kbd>go</kbd>
+          <h3>Retries until it's gone</h3>
+          <p>
+            Offline, or the server's down? The message stays queued and is retried after 30s, 2m, 10m, then every
+            half hour, even across restarts.
+          </p>
+        </article>
+        <article>
+          <kbd>gr</kbd>
+          <h3>Drafts survive crashes</h3>
+          <p>
+            What you're writing is saved every few seconds. Close the terminal mid-sentence and <kbd>gr</kbd> picks
+            it up next time.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="feature">
+    <div class="wrap split">
+      <div class="copy">
+        <div class="ttl"><span class="pill" style="--pill:var(--magenta)">Calendar</span>
+        <h2>Your day, one key away.</h2></div>
+        <div class="txt">
+        <p>
+          <kbd>C</kbd> flips to an agenda of every CalDAV calendar you have, from Fastmail, Google, iCloud and
+          Nextcloud. Recurring events, time zones and all-day events work, and everything is cached, so it
+          opens instantly.
+        </p>
+        <p>Add events the way you'd say them:</p>
+        <pre class="say mono"><span class="k">a</span> Lunch with Maya fri 12:30 1h @Osteria
+<span class="k">a</span> Design review thu 2pm 45m @meet</pre>
+        <a class="more" href="/docs/calendar/">The calendar →</a>
+        </div>
+      </div>
+      <Term screen="calendar" title="tern — Calendar" alt="tern's calendar: calendars and a month view on the left, an agenda in the middle, the selected event's details on the right." />
+    </div>
+  </section>
+
+  <!-- PEOPLE -->
+  <section class="feature">
+    <div class="wrap split">
+      <div class="copy">
+        <div class="ttl"><span class="pill" style="--pill:var(--green)">People</span>
+        <h2>Everyone, with context.</h2></div>
+        <div class="txt">
+        <p>
+          <kbd>P</kbd> opens your CardDAV contacts. Each person comes with your upcoming meetings together and the
+          mail you've traded. Write to them with <kbd>m</kbd>, edit them with <kbd>e</kbd>, and changes go
+          straight back to the server.
+        </p>
+        <p><kbd>A</kbd> on any message adds the sender. The same contacts complete addresses as you type.</p>
+        <a class="more" href="/docs/people/">People →</a>
+        </div>
+      </div>
+      <Term screen="people" crop={22} title="tern — People" alt="tern's people screen listing contacts, with Maya Okafor selected showing her phone, upcoming meetings and recent mail." />
+    </div>
+  </section>
+
+  <!-- THEMES -->
+  <section class="themes">
+    <div class="wrap">
+      <div class="head">
+        <span class="pill" style="--pill:var(--cyan)">Omarchy</span>
+        <h2>It wears your theme.</h2>
+        <p class="sub">
+          tern reads the active Omarchy theme and repaints within two seconds of <code>omarchy-theme-set</code>,
+          with no restart. It reads <code>colors.toml</code>, Alacritty, Kitty or Ghostty colors, and leaves your
+          terminal's transparency alone. This page does the same. Try it:
+        </p>
+        <ThemePicker variant="chips" />
+      </div>
+    </div>
+  </section>
+
+  <!-- DOCTOR -->
+  <section class="feature">
+    <div class="wrap split">
+      <div class="copy">
+        <div class="ttl"><span class="pill" style="--pill:var(--red)">Doctor</span>
+        <h2>When something's wrong, it says what.</h2></div>
+        <div class="txt">
+        <p>
+          <code>tern doctor</code> signs in to every IMAP and SMTP server (it sends nothing), checks password
+          commands and OAuth tokens, finds your calendars and address books, and looks at your theme, time zone
+          and tools.
+        </p>
+        <p>Every failure comes with the fix. It exits non-zero, so you can script it.</p>
+        <a class="more" href="/docs/doctor/">tern doctor →</a>
+        </div>
+      </div>
+      <div class="term doctor" role="img" aria-label="Output of tern doctor: one account's IMAP and SMTP sign-in refused, each with a suggested fix, and a second account signed in fine.">
+        <div class="term-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="title">~ $ tern doctor</span></div>
+        <pre><span class="d">~ $</span> tern doctor
+<span class="d">…</span>
+<b>Personal (ted@example.com)</b>
+  <span class="no">✗</span> imap        <span class="no">127.0.0.1:3143 — 127.0.0.1 (ted@example.com): IMAP LOGIN failed: NO LOGIN failed. Invalid login/password for user id ted@example.com</span>
+    <span class="d">→</span> the server refused the sign-in: check the username and password. Fastmail, iCloud and Gmail (without OAuth) need an app password, not your normal one
+  <span class="no">✗</span> smtp        <span class="no">127.0.0.1:3025 — SMTP: permanent error (535): 5.7.8  Authentication credentials invalid</span>
+    <span class="d">→</span> the server refused the sign-in: check the username and password. Fastmail, iCloud and Gmail (without OAuth) need an app password, not your normal one
+
+<b>Work (maya@example.com)</b>
+  <span class="ok">✓</span> imap        <span class="d">127.0.0.1:3143 · signed in · IDLE MOVE UIDPLUS</span>
+  <span class="ok">✓</span> smtp        <span class="d">127.0.0.1:3025 · signed in</span>
+
+<b>This machine</b>
+  <span class="ok">✓</span> theme       <span class="d">tokyo-night (~/.config/omarchy/current/theme)</span>
+  <span class="ok">✓</span> time zone   <span class="d">America/New_York</span>
+  <span class="ok">✓</span> editor      <span class="d">found one on PATH</span>
+  <span class="ok">✓</span> notify-send <span class="d">desktop notifications</span>
+<span class="d">…</span>
+<span class="no">2 problem(s), 0 warning(s).</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <section class="grid-sec">
+    <div class="wrap">
+      <div class="head">
+        <h2>And the rest of a working day.</h2>
+      </div>
+      <div class="grid">
+        {
+          grid.map((g) => (
+            <article>
+              <span class="gk mono">{g.k}</span>
+              <h3>{g.t}</h3>
+              <p>{g.d}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="compare" id="compare">
+    <div class="wrap narrow-wide">
+      <div class="head">
+        <h2>tern and neomutt</h2>
+        <p class="sub">
+          neomutt is a great piece of software with decades of depth. If you need PGP or local maildir, keep using
+          it. tern is for people who want mail, calendar and contacts working together today, with less
+          configuration.
+        </p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th scope="col"></th><th scope="col">neomutt</th><th scope="col">tern</th></tr>
+          </thead>
+          <tbody>
+            {
+              compare.map(([what, a, b]) => (
+                <tr>
+                  <th scope="row">{what}</th>
+                  <td class:list={[a.startsWith('yes') ? 'y' : a.startsWith('no') ? 'n' : 'p']}>{a}</td>
+                  <td class:list={[b.startsWith('yes') || b.startsWith('built') || b.startsWith('follows') || b.startsWith('TOML') || b.startsWith('built-in') ? 'y' : b.startsWith('no') || b.startsWith('not') ? 'n' : 'p']}>{b}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section class="install" id="install">
+    <div class="wrap narrow-wide">
+      <div class="install-card">
+        <div>
+          <h2>Five minutes to inbox.</h2>
+          <p>
+            tern is a single Rust binary. Build it from a checkout of the source, try the demo with no account,
+            then point it at your servers. Settings → Accounts has presets for Fastmail, Google, iCloud and
+            Microsoft 365.
+          </p>
+          <div class="ctas">
+            <a class="btn primary" href="/docs/install/">Install guide</a>
+            <a class="btn" href="/docs/">Browse the docs</a>
+          </div>
+        </div>
+        <pre class="steps mono"><span class="c"># in a checkout of the source</span>
+<span class="p">$</span> cargo install --path .
+<span class="p">$</span> tern --demo     <span class="c"># look around, no account</span>
+<span class="p">$</span> tern --init     <span class="c"># write the config</span>
+<span class="p">$</span> tern doctor     <span class="c"># check every server</span>
+<span class="p">$</span> tern</pre>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* HERO */
+  .hero {
+    position: relative;
+    padding: 72px 0 40px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: -20% -10% auto;
+    height: 720px;
+    background:
+      radial-gradient(40% 50% at 20% 20%, color-mix(in oklab, var(--accent) 18%, transparent), transparent 70%),
+      radial-gradient(35% 45% at 85% 10%, color-mix(in oklab, var(--magenta) 12%, transparent), transparent 70%);
+    pointer-events: none;
+    transition: background 0.3s;
+  }
+  .hero .wrap {
+    position: relative;
+  }
+  .hero-copy {
+    max-width: 780px;
+  }
+  .eyebrow {
+    margin: 0 0 18px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .eyebrow .prompt {
+    color: var(--green);
+  }
+  .eyebrow .dim {
+    color: var(--subtle);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(40px, 7.2vw, 84px);
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+  .accent {
+    color: var(--accent);
+  }
+  .cursor {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.88em;
+    margin-left: 0.08em;
+    vertical-align: -0.06em;
+    background: var(--accent);
+    animation: blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  .lede {
+    margin: 26px 0 0;
+    font-size: clamp(17px, 2vw, 20px);
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 640px;
+  }
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .hero-shot {
+    margin-top: 56px;
+  }
+  .shot-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-top: 18px;
+  }
+  .shot-foot .label {
+    font-size: 12.5px;
+    color: var(--subtle);
+  }
+
+  /* KEYSTROKES */
+  .strokes {
+    border-block: 1px solid var(--border);
+    background: var(--surface);
+    margin-top: 48px;
+  }
+  .strokes ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px 28px;
+    margin: 0;
+    padding: 20px 0;
+    list-style: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .strokes li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* MANIFESTO */
+  .manifesto {
+    padding: 110px 0 40px;
+  }
+  .narrow {
+    max-width: 860px;
+  }
+  .manifesto p {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: clamp(20px, 2.6vw, 28px);
+    line-height: 1.45;
+    letter-spacing: -0.02em;
+    color: var(--strong);
+  }
+  .manifesto em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  /* FEATURE ROWS */
+  .feature {
+    padding: 90px 0 0;
+  }
+  .split {
+    display: grid;
+    gap: 40px;
+  }
+  .copy {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 16px 64px;
+    align-items: start;
+  }
+  .ttl h2 {
+    margin-bottom: 0;
+  }
+  .txt {
+    padding-top: 34px;
+  }
+  .copy h2,
+  .head h2 {
+    margin: 16px 0 18px;
+    font-size: clamp(28px, 3.4vw, 42px);
+  }
+  .copy p {
+    color: var(--muted);
+    margin: 0 0 14px;
+    font-size: 17px;
+  }
+  .copy code,
+  .sub code {
+    font-size: 0.88em;
+    color: var(--strong);
+  }
+  .more {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .more:hover {
+    text-decoration: underline;
+  }
+  .say {
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--magenta);
+    border-radius: 6px;
+    background: var(--surface);
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--strong);
+    overflow-x: auto;
+  }
+  .say .k {
+    color: var(--magenta);
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  @media (max-width: 900px) {
+    .copy {
+      grid-template-columns: 1fr;
+    }
+    .txt {
+      padding-top: 0;
+    }
+  }
+
+  /* SAFETY */
+  .safety,
+  .themes,
+  .grid-sec,
+  .compare,
+  .install {
+    padding: 110px 0 0;
+  }
+  .head {
+    max-width: 720px;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 17px;
+    margin: 0 0 24px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 36px;
+  }
+  .cards article {
+    padding: 26px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--surface), var(--bg));
+  }
+  .cards h3 {
+    margin: 18px 0 8px;
+    font-size: 18px;
+  }
+  .cards p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  @media (max-width: 860px) {
+    .cards {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* DOCTOR */
+  .doctor pre {
+    margin: 0;
+    white-space: pre-wrap;
+    padding: 18px 20px;
+    font-size: clamp(10.5px, 1.25vw, 13px);
+    line-height: 1.55;
+    color: var(--fg);
+    overflow-x: auto;
+  }
+  .doctor b {
+    color: var(--strong);
+  }
+  .doctor .ok {
+    color: var(--green);
+  }
+  .doctor .no {
+    color: var(--red);
+  }
+  .doctor .warn {
+    color: var(--yellow);
+  }
+  .doctor .d {
+    color: var(--subtle);
+  }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--border);
+  }
+  .grid article {
+    padding: 24px 22px;
+    background: var(--bg);
+    transition: background-color 0.2s;
+  }
+  .grid article:hover {
+    background: var(--surface);
+  }
+  .gk {
+    display: inline-grid;
+    place-items: center;
+    min-width: 32px;
+    height: 28px;
+    padding: 0 7px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .grid h3 {
+    margin: 14px 0 6px;
+    font-size: 15.5px;
+    letter-spacing: -0.01em;
+  }
+  .grid p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+  @media (max-width: 1000px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 560px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* COMPARE */
+  .narrow-wide {
+    max-width: 980px;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    min-width: 560px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+  thead th {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--subtle);
+    background: var(--surface);
+  }
+  thead th:last-child {
+    color: var(--accent);
+  }
+  tbody th {
+    font-weight: 600;
+    color: var(--strong);
+    width: 36%;
+  }
+  td {
+    color: var(--muted);
+  }
+  td.y::before,
+  td.n::before,
+  td.p::before {
+    font-family: var(--mono);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  td.y::before {
+    content: '✓';
+    color: var(--green);
+  }
+  td.n::before {
+    content: '—';
+    color: var(--subtle);
+  }
+  td.p::before {
+    content: '~';
+    color: var(--yellow);
+  }
+  td:last-child {
+    color: var(--fg);
+  }
+
+  /* INSTALL */
+  .install-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 40px;
+    align-items: center;
+    padding: 44px;
+    border: 1px solid var(--accent-line);
+    border-radius: 16px;
+    background:
+      radial-gradient(80% 120% at 0% 0%, var(--accent-soft), transparent 60%),
+      var(--surface);
+  }
+  .install-card h2 {
+    margin: 0 0 14px;
+    font-size: clamp(28px, 3.4vw, 38px);
+  }
+  .install-card p {
+    color: var(--muted);
+    margin: 0;
+  }
+  .install-card .ctas {
+    margin-top: 24px;
+  }
+  .steps {
+    margin: 0;
+    padding: 22px 24px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--strong);
+    overflow-x: auto;
+  }
+  .steps .p {
+    color: var(--green);
+  }
+  .steps .c {
+    color: var(--subtle);
+  }
+  @media (max-width: 860px) {
+    .install-card {
+      grid-template-columns: 1fr;
+      padding: 28px 22px;
+    }
+  }
+</style>
