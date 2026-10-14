@@ -1,11 +1,11 @@
 ---
 title: Install
-description: Build tern from source with the Rust toolchain.
+description: Install tern with cargo, straight from GitHub.
 section: start
 order: 2
 ---
 
-tern is a single Rust binary. You build it from a checkout of the source.
+tern is a single Rust binary, built from [its source on GitHub](https://github.com/etmartinkazoo/tern) with cargo.
 
 ## Requirements
 
@@ -22,9 +22,15 @@ tern is a single Rust binary. You build it from a checkout of the source.
 
 ## Build and install
 
-From a checkout of the source:
+```sh
+cargo install --git https://github.com/etmartinkazoo/tern
+```
+
+Or from a checkout, if you want to read or change the code:
 
 ```sh
+git clone https://github.com/etmartinkazoo/tern
+cd tern
 cargo install --path .
 ```
 
@@ -37,7 +43,7 @@ ln -s ~/.cargo/bin/tern ~/.local/bin/tern
 To build without installing:
 
 ```sh
-cargo build --release
+cargo build --release   # in the checkout
 ./target/release/tern --demo
 ```
 
@@ -52,4 +58,4 @@ tern --demo
 
 ## Updating
 
-Pull the new source and run `cargo install --path .` again. The config file and your data in `~/.config/tern`, `~/.cache/tern` and `~/.local/share/tern` are left alone. See [Files](/docs/files/).
+Run `cargo install --git https://github.com/etmartinkazoo/tern` again (or `git pull` and `cargo install --path .` in a checkout). The config file and your data in `~/.config/tern`, `~/.cache/tern` and `~/.local/share/tern` are left alone. See [Files](/docs/files/).

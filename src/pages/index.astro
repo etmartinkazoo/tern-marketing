@@ -67,6 +67,7 @@ const compare = [
         <div class="ctas">
           <a class="btn primary" href="/docs/install/">Install tern</a>
           <a class="btn" href="/docs/quick-start/">Read the quick start <span aria-hidden="true">→</span></a>
+          <a class="btn" href="https://github.com/etmartinkazoo/tern">GitHub</a>
         </div>
       </div>
 
@@ -352,7 +353,7 @@ const compare = [
         <div>
           <h2>Five minutes to inbox.</h2>
           <p>
-            tern is a single Rust binary. Build it from a checkout of the source, try the demo with no account,
+            tern is a single Rust binary. Install it with cargo, try the demo with no account,
             then point it at your servers. Settings → Accounts has presets for Fastmail, Google, iCloud and
             Microsoft 365.
           </p>
@@ -361,8 +362,8 @@ const compare = [
             <a class="btn" href="/docs/">Browse the docs</a>
           </div>
         </div>
-        <pre class="steps mono"><span class="c"># in a checkout of the source</span>
-<span class="p">$</span> cargo install --path .
+        <pre class="steps mono"><span class="c"># needs a Rust toolchain</span>
+<span class="p">$</span> cargo install --git https://github.com/etmartinkazoo/tern
 <span class="p">$</span> tern --demo     <span class="c"># look around, no account</span>
 <span class="p">$</span> tern --init     <span class="c"># write the config</span>
 <span class="p">$</span> tern doctor     <span class="c"># check every server</span>

@@ -25,6 +25,7 @@ const ids = JSON.stringify(themes.map((t) => t.id));
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
     <meta name="theme-color" content="#1a1b26" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/jbm-regular.woff2" as="font" type="font/woff2" crossorigin />
@@ -56,6 +57,7 @@ const ids = JSON.stringify(themes.map((t) => t.id));
           <a href="/docs/keys/">Keys</a>
           <a href="/#compare" class="hide-sm">vs neomutt</a>
           <a href="/docs/install/" class="hide-sm">Install</a>
+          <a href="https://github.com/etmartinkazoo/tern" class="hide-sm">GitHub</a>
         </nav>
         <div class="right">
           <ThemePicker />
@@ -99,7 +101,7 @@ const ids = JSON.stringify(themes.map((t) => t.id));
         </div>
       </div>
       <div class="wrap foot-meta">
-        <span>tern {site.version} · {site.license} licensed · protocols by <a href="https://github.com/pimalaya">Pimalaya</a></span>
+        <span>tern {site.version} · {site.license} licensed · <a href="https://github.com/etmartinkazoo/tern">source on GitHub</a> · protocols by <a href="https://github.com/pimalaya">Pimalaya</a></span>
         <span class="mono">:wq</span>
       </div>
     </footer>

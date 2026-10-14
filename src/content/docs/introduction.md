@@ -49,6 +49,6 @@ tern is opinionated about staying small and fast. Today it doesn't have:
 
 ## Where to go next
 
-- [Install](/docs/install/) tern from source.
+- [Install](/docs/install/) tern with one `cargo install`.
 - [Quick start](/docs/quick-start/): explore the demo mailbox, then connect your own accounts.
 - [Keys](/docs/keys/): every shortcut on one page.
