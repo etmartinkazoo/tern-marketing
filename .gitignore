@@ -26,3 +26,6 @@ pnpm-debug.log*
 # capture scratch
 scripts/captures/out/
 scripts/captures/xdg/
+
+# wrangler
+.wrangler/

@@ -10,7 +10,11 @@ dependency.
 npm install
 npm run dev        # http://localhost:4321
 npm run build      # static site in dist/
+npm run deploy     # build, then publish to the tern-marketing Worker on Cloudflare
 ```
+
+Live at https://tern-marketing.ted-df5.workers.dev (static assets on a Cloudflare
+Worker, config in `wrangler.jsonc`).
 
 ## Layout
 
