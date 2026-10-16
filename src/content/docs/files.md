@@ -13,6 +13,7 @@ tern follows the XDG base directories. The paths below are the defaults. `XDG_CO
 |---|---|
 | `~/.config/tern/config.toml` | your accounts, servers and settings. Written by `--init`, and edited in place by Settings |
 | `~/.config/omarchy/current/theme/` | read for colors (or `theme_dir`, `TERN_THEME_DIR`) |
+| `~/.config/tern/plugins/<name>/` | your [plugins](/docs/plugins): each folder has a `plugin.toml` and the program it runs |
 
 ## Data (keep these)
 

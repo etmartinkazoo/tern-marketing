@@ -11,5 +11,6 @@ export const sections = [
   { id: 'start', title: 'Getting started' },
   { id: 'mail', title: 'Mail' },
   { id: 'calendar', title: 'Calendar & people' },
+  { id: 'plugins', title: 'Plugins' },
   { id: 'reference', title: 'Reference' },
 ] as const;

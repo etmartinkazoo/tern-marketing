@@ -33,6 +33,7 @@ const grid = [
   { k: ',', t: 'Settings without a manual', d: 'Accounts, calendars, keys and theme, edited in the app. Your config.toml comments survive.' },
   { k: 'auth', t: 'OAuth built in', d: 'tern auth signs Gmail and Microsoft 365 in through the browser. No helper scripts.' },
   { k: 'click', t: 'Mouse when you want it', d: 'Click, double-click and scroll every pane. Turn it off for the terminal’s own selection.' },
+  { k: ':', t: 'Plugins for your workflow', d: 'Turn an email into a todo, a ticket or a CRM note. Plugins are small programs in any language, outside tern.' },
   { k: 'offline', t: 'Works offline', d: 'Calendars and contacts are cached; mail sent offline waits in the outbox and goes when you’re back.' },
 ];
 
@@ -47,6 +48,7 @@ const compare = [
   ['Unified inbox', 'with notmuch', 'yes'],
   ['Writing', '$EDITOR', 'built-in vim-style pane, or $EDITOR'],
   ['Configuration', 'muttrc', 'TOML plus an in-app settings screen'],
+  ['Extending it', 'macros and pipe-to-shell', 'plugins: any language, JSON in and out, per account'],
   ['Colors', 'hand-written color lines', 'follows your Omarchy theme, live'],
   ['Local maildir, mbox, notmuch', 'yes', 'no — IMAP only'],
   ['PGP and S/MIME', 'yes', 'not yet'],

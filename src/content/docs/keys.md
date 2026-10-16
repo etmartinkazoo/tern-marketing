@@ -76,6 +76,8 @@ The same table is inside tern: press `?` (Settings → Keys), and `/` filters it
 | `ge` | make a calendar event from this message |
 | `gr` | resume the unsent message autosaved last time |
 | `y` | copy sender's address |
+| `:` | plugins: pick an action for this message ([Plugins](/docs/plugins)) |
+| `;` + key | run the plugin action bound to that key |
 | `gc` | sync contacts now |
 
 ## Calendar

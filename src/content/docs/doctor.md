@@ -29,6 +29,7 @@ tern --config ~/other.toml doctor
 - `default_calendar` names one of your calendars.
 
 **This machine**
+- Each [plugin](/docs/plugins): its name, actions and keys, and any `plugin.toml` that doesn't parse.
 - The theme directory, and whether it has colors tern can read.
 - `calendar_timezone` is a real zone.
 - An editor for `:e` is available.
